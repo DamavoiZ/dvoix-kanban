@@ -1,4 +1,4 @@
-// Tests for the `.board` format (src/board.js). Run with `npm test`.
+// Tests for the `.kboard` format (src/board.js). Run with `npm test`.
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {

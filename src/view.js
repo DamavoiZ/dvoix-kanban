@@ -1,4 +1,4 @@
-// The board view for `.board` files: columns side by side, cards that can be
+// The board view for `.kboard` files: columns side by side, cards that can be
 // added, edited, ticked off, deleted and dragged between columns, and columns
 // that can be added, renamed, deleted and reordered.
 //

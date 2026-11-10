@@ -4,11 +4,11 @@ Kanban boards for [dvoix](https://github.com/DamavoiZ/dvoix). Official store plu
 
 ## What it does
 
-- New file type `.board`. Create one in the file explorer with **Create Kanban board**; it starts with the columns *To do*, *Doing* and *Done*.
+- New file type `.kboard`. Create one in the file explorer with **Create Kanban board**; it starts with the columns *To do*, *Doing* and *Done*.
 - Add, edit, tick off and delete cards. Drag cards within a column or to another one.
 - Add, rename (double-click the name), delete and reorder columns (drag the column header).
 - Cards show due dates and priorities written in the same syntax as tasks in notes. Overdue cards are marked.
-- The plugin asks for no permissions: it only reads and changes the `.board` file that is open.
+- The plugin asks for no permissions: it only reads and changes the `.kboard` file that is open.
 
 | Action | How |
 | --- | --- |

@@ -1,4 +1,4 @@
-// The `.board` format: a Markdown file in which every `## heading` is a column
+// The `.kboard` format: a Markdown file in which every `## heading` is a column
 // and every top-level list item below it is a card. It is the same idea as the
 // Kanban plugin of Obsidian, so a board stays readable and editable without
 // dvoix:

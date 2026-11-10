@@ -1,4 +1,4 @@
-// Entry point of the Kanban plugin for dvoix: registers the `.board` file
+// Entry point of the Kanban plugin for dvoix: registers the `.kboard` file
 // type. Bundled into a single `main.js` by `npm run build`, because the app
 // loads store plugins as one ES module without imports.
 import { template } from "./board.js";
@@ -10,9 +10,9 @@ const icon =
 export default {
   onload(dvoix) {
     dvoix.registerFileType({
-      id: "board",
+      id: "kboard",
       label: "Kanban board",
-      extensions: ["board"],
+      extensions: ["kboard"],
       icon,
       template,
       mount: mountBoard,

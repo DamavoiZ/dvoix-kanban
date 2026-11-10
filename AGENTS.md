@@ -4,7 +4,7 @@ Fixed rules for all AI agents (Claude, Codex, Copilot, …) working in this repo
 
 ## What this is
 
-The official Kanban plugin for [dvoix](https://github.com/DamavoiZ/dvoix), installed through the plugin store in the app. It adds the file type `.board`: a Markdown file in which every `## heading` is a column and every top-level list item is a card. The API it uses is described in `docs/plugins/README.md` of the app repo; read it before changing anything that talks to `dvoix`.
+The official Kanban plugin for [dvoix](https://github.com/DamavoiZ/dvoix), installed through the plugin store in the app. It adds the file type `.kboard`: a Markdown file in which every `## heading` is a column and every top-level list item is a card. The API it uses is described in `docs/plugins/README.md` of the app repo; read it before changing anything that talks to `dvoix`.
 
 ## The dvoix repos
 
@@ -44,12 +44,12 @@ dvoix is spread across several repositories. This section is also in the `AGENTS
 
 ## Basic rules
 
-1. **The file is the only source of truth.** The view keeps no state of its own that is not in the `.board` file. It never writes the file itself: every change goes to `onchange`, the app saves.
+1. **The file is the only source of truth.** The view keeps no state of its own that is not in the `.kboard` file. It never writes the file itself: every change goes to `onchange`, the app saves.
 2. **The format stays plain Markdown** that people can read and edit without dvoix. Lines the plugin does not understand (frontmatter, text inside a column, headings of other levels) are kept when writing back. A file in canonical shape (see `src/board.js`) must come back byte for byte; a test checks this.
 3. **Changes from outside are taken over** (sync, git, another editor). While the user edits a card or drags, a newer file is held back and applied right after, without losing the edit.
 4. **Task syntax like in the app.** Due dates and priorities on cards use the syntax of `crates/dvoix-core/src/tasks.rs` in the app (`📅 2026-12-01`, `due:2026-12-01`, `⏫ 🔼 🔽`, `!high`/`!medium`/`!low`, German words only as aliases). If the app changes it, this plugin follows.
 5. **Only the API, no app internals.** The plugin talks to the app only through the `dvoix` object it gets in `onload`. It asks for no permissions today; add one to `manifest.json` only when a feature really needs it, because users see the list before installing.
-6. **Never change the `id`** (`kanban`). It is the folder name in `<vault>/.dvoix/plugins/kanban/` and the key in the plugin list.
+6. **Never change the `id`** (`kanban`) **or the extension** (`.kboard`). The id is the folder name in `<vault>/.dvoix/plugins/kanban/` and the key in the plugin list; the extension is what existing boards of users are saved as.
 7. **Always the newest versions** of Node.js (`.nvmrc`, `engines`), esbuild and the GitHub Actions.
 8. **Everything is in English**: code, comments, commit messages, UI texts, README.
 
@@ -59,7 +59,7 @@ dvoix is spread across several repositories. This section is also in the `AGENTS
 manifest.json          id, name, version, permissions; becomes a release asset as is
 styles.css             styles, all classes prefixed with kb-; becomes a release asset as is
 src/main.js            entry point: registers the file type
-src/board.js           parse and write the .board format, due/priority markers (no DOM)
+src/board.js           parse and write the .kboard format, due/priority markers (no DOM)
 src/view.js            the board view (plain DOM, pointer-event drag and drop)
 test/board.test.js     tests for the format (node --test)
 scripts/build.mjs      bundles src/ into dist/main.js and copies manifest.json and styles.css
