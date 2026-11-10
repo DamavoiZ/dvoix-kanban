@@ -21,7 +21,8 @@ dvoix is spread across several repositories. This section is also in the `AGENTS
 
 | Task | Repo |
 | --- | --- |
-| Basic function almost everyone needs (explorer, search, tasks, …) | `dvoix`, as a core plugin under `src/lib/plugins/core/` |
+| Basic note and editor function that is always there (explorer, search, tags, backlinks, tabs, views, …) | `dvoix`, as a core feature under `src/lib/features/` |
+| Optional function that ships with the app (tasks, projects, graph, Git, …) | `dvoix`, as a core plugin under `src/lib/plugins/core/` |
 | Extra function not everyone wants (kanban, tracking, …) | its own repo `dvoi-dev/dvoix-<name>` as a store plugin, plus an entry in `dvoix-plugins` |
 | Extend the plugin API (`PluginContext`, permissions) | `dvoix`, plus `docs/plugins/README.md` there and the `plugin-api.md` page on the website |
 | Explain how to use dvoix | `dvoix-website`, page in `src/content/docs/` |
