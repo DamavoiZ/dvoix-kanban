@@ -1,0 +1,36 @@
+# Publishes a release whenever main carries a version in manifest.json that
+# has no release yet. The tag is the version without "v", the assets are the
+# three files the dvoix plugin store downloads. So releasing = bumping the
+# version in manifest.json and package.json in a PR and merging it.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Create the release if this version has none
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(node -p "require('./manifest.json').version")
+          if gh release view "$version" > /dev/null 2>&1; then
+            echo "Release $version exists already, nothing to do."
+            exit 0
+          fi
+          gh release create "$version" dist/manifest.json dist/main.js dist/styles.css \
+            --title "$version" --target "$GITHUB_SHA" --generate-notes --latest
