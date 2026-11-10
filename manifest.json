@@ -1,0 +1,9 @@
+{
+  "id": "kanban",
+  "name": "Kanban",
+  "version": "1.0.0",
+  "description": "Kanban boards as .board files: columns and cards in plain Markdown, with drag and drop.",
+  "author": "damavoi",
+  "minAppVersion": "0.1.0",
+  "permissions": []
+}
