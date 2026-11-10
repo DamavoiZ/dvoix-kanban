@@ -386,114 +386,187 @@ export function mountBoard(el, initial) {
   }
 
   // ---- dragging --------------------------------------------------------
+  //
+  // The dragged card (or column) is lifted out and a placeholder of the same
+  // size takes its place. When the placeholder moves, the other cards slide
+  // to their new spot (FLIP: measure, move, animate from the old position),
+  // so the board never jumps. Pointer moves are handled once per frame, and
+  // positions are read from the layout (offsetTop/offsetLeft), which ignores
+  // the running slide animations and keeps the target from flickering.
 
   function startDrag(e, what, source) {
     if (e.button !== 0 || editing || drag) return;
     if (e.target.closest("button, input, textarea, a")) return;
-    drag = { what, source, startX: e.clientX, startY: e.clientY, active: false, ghost: null, marker: null, to: null };
+    // Keeps the browser from starting a text selection on the way.
+    e.preventDefault();
+    drag = {
+      what,
+      source,
+      startX: e.clientX,
+      startY: e.clientY,
+      x: e.clientX,
+      y: e.clientY,
+      active: false,
+      dropping: false,
+      ghost: null,
+      placeholder: null,
+      to: null,
+      frame: 0,
+    };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointercancel", cancelDrag);
     window.addEventListener("keydown", onDragKey, true);
   }
 
-  function begin(d, e) {
+  function removeDragListeners() {
+    window.removeEventListener("pointermove", onMove);
+    window.removeEventListener("pointerup", onUp);
+    window.removeEventListener("pointercancel", cancelDrag);
+    window.removeEventListener("keydown", onDragKey, true);
+  }
+
+  function begin(d) {
     d.active = true;
+    window.getSelection()?.removeAllRanges();
+    document.documentElement.classList.add("kb-drag-active");
+
     const rect = d.source.getBoundingClientRect();
     d.offsetX = d.startX - rect.left;
     d.offsetY = d.startY - rect.top;
     d.ghost = d.source.cloneNode(true);
     d.ghost.classList.add("kb-ghost");
     d.ghost.style.width = `${rect.width}px`;
-    if (d.what.kind === "column") d.ghost.style.height = `${Math.min(rect.height, 320)}px`;
+    d.ghost.style.height = `${d.what.kind === "column" ? Math.min(rect.height, 360) : rect.height}px`;
     document.body.append(d.ghost);
-    d.source.classList.add("kb-dragging");
-    d.marker = h("div", d.what.kind === "card" ? "kb-drop" : "kb-drop-column");
-    root.classList.add("kb-is-dragging");
-    moveGhost(d, e);
-  }
 
-  function moveGhost(d, e) {
-    d.ghost.style.transform = `translate(${e.clientX - d.offsetX}px, ${e.clientY - d.offsetY}px)`;
+    d.placeholder = h("div", d.what.kind === "card" ? "kb-placeholder" : "kb-placeholder kb-placeholder-column");
+    if (d.what.kind === "card") d.placeholder.style.height = `${rect.height}px`;
+    else d.placeholder.style.width = `${rect.width}px`;
+    d.source.before(d.placeholder);
+    d.source.classList.add("kb-lifted");
+    d.to = d.what.kind === "card" ? { column: d.what.column, index: d.what.index } : d.what.column;
+    frame();
   }
 
   function onMove(e) {
     const d = drag;
-    if (!d) return;
+    if (!d || d.dropping) return;
+    d.x = e.clientX;
+    d.y = e.clientY;
     if (!d.active) {
-      if (Math.hypot(e.clientX - d.startX, e.clientY - d.startY) < DRAG_THRESHOLD) return;
-      begin(d, e);
-    }
-    e.preventDefault();
-    moveGhost(d, e);
-    autoScroll(e);
-
-    const columns = [...root.querySelectorAll(":scope > .kb-column[data-column]")];
-    if (d.what.kind === "card") {
-      // The column under the pointer, or the nearest one beside it.
-      let target = columns[0];
-      let best = Infinity;
-      for (const c of columns) {
-        const r = c.getBoundingClientRect();
-        const dist = e.clientX < r.left ? r.left - e.clientX : e.clientX > r.right ? e.clientX - r.right : 0;
-        if (dist < best) {
-          best = dist;
-          target = c;
-        }
-      }
-      if (!target) return;
-      const list = target.querySelector(".kb-cards");
-      const cards = [...list.querySelectorAll(":scope > .kb-card")].filter((c) => c !== d.source);
-      let index = cards.findIndex((c) => {
-        const r = c.getBoundingClientRect();
-        return e.clientY < r.top + r.height / 2;
-      });
-      if (index < 0) index = cards.length;
-      list.insertBefore(d.marker, cards[index] ?? null);
-      d.to = { column: Number(target.dataset.column), index };
-      scrollIntoList(list, e);
-    } else {
-      const others = columns.filter((c) => c !== d.source);
-      let index = others.findIndex((c) => {
-        const r = c.getBoundingClientRect();
-        return e.clientX < r.left + r.width / 2;
-      });
-      if (index < 0) index = others.length;
-      root.insertBefore(d.marker, others[index] ?? root.querySelector(":scope > .kb-add-column, :scope > .kb-column-new"));
-      d.to = index;
+      if (Math.hypot(d.x - d.startX, d.y - d.startY) < DRAG_THRESHOLD) return;
+      begin(d);
     }
   }
 
-  function autoScroll(e) {
-    const r = root.getBoundingClientRect();
-    if (e.clientX < r.left + SCROLL_EDGE) root.scrollLeft -= 16;
-    else if (e.clientX > r.right - SCROLL_EDGE) root.scrollLeft += 16;
-  }
-
-  function scrollIntoList(list, e) {
-    const r = list.getBoundingClientRect();
-    if (e.clientY < r.top + SCROLL_EDGE) list.scrollTop -= 12;
-    else if (e.clientY > r.bottom - SCROLL_EDGE) list.scrollTop += 12;
-  }
-
-  function endDrag() {
+  /** One step per animation frame: ghost, auto-scroll, drop target. */
+  function frame() {
     const d = drag;
-    drag = null;
-    window.removeEventListener("pointermove", onMove);
-    window.removeEventListener("pointerup", onUp);
-    window.removeEventListener("pointercancel", cancelDrag);
-    window.removeEventListener("keydown", onDragKey, true);
-    if (!d?.active) return null;
-    d.ghost.remove();
-    d.marker.remove();
-    d.source.classList.remove("kb-dragging");
-    root.classList.remove("kb-is-dragging");
-    return d;
+    if (!d?.active || d.dropping) return;
+    d.ghost.style.transform = `translate(${d.x - d.offsetX}px, ${d.y - d.offsetY}px)`;
+    autoScroll(d);
+    if (d.what.kind === "card") targetCard(d);
+    else targetColumn(d);
+    d.frame = requestAnimationFrame(frame);
+  }
+
+  function autoScroll(d) {
+    const edge = (pos, start, end) =>
+      pos < start + SCROLL_EDGE ? -Math.ceil((start + SCROLL_EDGE - pos) / 4) : pos > end - SCROLL_EDGE ? Math.ceil((pos - end + SCROLL_EDGE) / 4) : 0;
+    const r = root.getBoundingClientRect();
+    root.scrollLeft += edge(d.x, r.left, r.right);
+    if (d.list) {
+      const l = d.list.getBoundingClientRect();
+      if (d.x >= l.left && d.x <= l.right) d.list.scrollTop += edge(d.y, l.top, l.bottom);
+    }
+  }
+
+  const columnEls = () => [...root.querySelectorAll(":scope > .kb-column[data-column]")];
+
+  function targetCard(d) {
+    // The column under the pointer, or the nearest one beside it.
+    let target = null;
+    let best = Infinity;
+    for (const c of columnEls()) {
+      const r = c.getBoundingClientRect();
+      const dist = d.x < r.left ? r.left - d.x : d.x > r.right ? d.x - r.right : 0;
+      if (dist < best) {
+        best = dist;
+        target = c;
+      }
+    }
+    if (!target) return;
+    const list = target.querySelector(".kb-cards");
+    d.list = list;
+    const cards = [...list.querySelectorAll(":scope > .kb-card:not(.kb-lifted)")];
+    const top = list.getBoundingClientRect().top - list.scrollTop;
+    let index = cards.findIndex((c) => d.y < top + c.offsetTop + c.offsetHeight / 2);
+    if (index < 0) index = cards.length;
+    const column = Number(target.dataset.column);
+    if (d.to && d.to.column === column && d.to.index === index) return;
+
+    const moving = [...root.querySelectorAll(".kb-card:not(.kb-lifted), .kb-placeholder")];
+    flip(moving, () => list.insertBefore(d.placeholder, cards[index] ?? null));
+    d.to = { column, index };
+  }
+
+  function targetColumn(d) {
+    const others = columnEls().filter((c) => c !== d.source);
+    const left = root.getBoundingClientRect().left - root.scrollLeft;
+    let index = others.findIndex((c) => d.x < left + c.offsetLeft + c.offsetWidth / 2);
+    if (index < 0) index = others.length;
+    if (d.to === index) return;
+    const after = others[index] ?? root.querySelector(":scope > .kb-add-column, :scope > .kb-column-new");
+    flip([...others, after], () => root.insertBefore(d.placeholder, after));
+    d.to = index;
+  }
+
+  /** Runs `change` and lets `els` slide from where they were to where they are now. */
+  function flip(els, change) {
+    els = els.filter(Boolean);
+    const before = new Map(els.map((el) => [el, el.getBoundingClientRect()]));
+    change();
+    for (const el of els) {
+      el.style.transition = "none";
+      el.style.transform = "";
+    }
+    const moved = [];
+    for (const el of els) {
+      const a = before.get(el);
+      const b = el.getBoundingClientRect();
+      const dx = a.left - b.left;
+      const dy = a.top - b.top;
+      if (dx || dy) moved.push([el, dx, dy]);
+    }
+    for (const [el, dx, dy] of moved) el.style.transform = `translate(${dx}px, ${dy}px)`;
+    void root.offsetWidth;
+    for (const [el] of moved) {
+      el.style.transition = "transform 160ms ease";
+      el.style.transform = "";
+    }
   }
 
   function onUp() {
-    const d = endDrag();
-    if (!d || d.to === null) return;
+    const d = drag;
+    if (!d || d.dropping) return;
+    removeDragListeners();
+    if (!d.active) {
+      drag = null;
+      return;
+    }
+    // Let the ghost land on the placeholder, then apply the move.
+    d.dropping = true;
+    cancelAnimationFrame(d.frame);
+    const r = d.placeholder.getBoundingClientRect();
+    d.ghost.style.transition = "transform 140ms ease, rotate 140ms ease";
+    d.ghost.style.transform = `translate(${r.left}px, ${r.top}px)`;
+    d.ghost.style.rotate = "0deg";
+    d.landing = setTimeout(() => drop(d), 140);
+  }
+
+  function drop(d) {
+    cleanupDrag(d);
     if (pending !== null) {
       // The file changed on disk during the drag; positions may no longer
       // match, so take over the new file and drop the move.
@@ -503,17 +576,29 @@ export function mountBoard(el, initial) {
     }
     if (d.what.kind === "card") {
       const { column, index } = d.what;
-      if (column === d.to.column && index === d.to.index) return;
-      moveCard(board, { column, index }, d.to);
-    } else {
-      if (d.what.column === d.to) return;
+      if (column !== d.to.column || index !== d.to.index) moveCard(board, { column, index }, d.to);
+    } else if (d.what.column !== d.to) {
       moveColumn(board, d.what.column, d.to);
     }
     commit();
   }
 
+  function cleanupDrag(d) {
+    if (drag === d) drag = null;
+    removeDragListeners();
+    cancelAnimationFrame(d.frame);
+    clearTimeout(d.landing);
+    d.ghost?.remove();
+    d.placeholder?.remove();
+    d.source.classList.remove("kb-lifted");
+    document.documentElement.classList.remove("kb-drag-active");
+  }
+
   function cancelDrag() {
-    if (endDrag()) {
+    const d = drag;
+    if (!d) return;
+    cleanupDrag(d);
+    if (d.active) {
       applyPending();
       render();
     }
@@ -542,7 +627,7 @@ export function mountBoard(el, initial) {
       render();
     },
     destroy() {
-      endDrag();
+      if (drag) cleanupDrag(drag);
       // Removing a focused input fires blur; saving then could reach a file
       // that is no longer open.
       rendering = true;
