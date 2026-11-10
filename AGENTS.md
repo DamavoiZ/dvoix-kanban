@@ -4,7 +4,7 @@ Fixed rules for all AI agents (Claude, Codex, Copilot, …) working in this repo
 
 ## What this is
 
-The official Kanban plugin for [dvoix](https://github.com/DamavoiZ/dvoix), installed through the plugin store in the app. It adds the file type `.kboard`: a Markdown file in which every `## heading` is a column and every top-level list item is a card. The API it uses is described in `docs/plugins/README.md` of the app repo; read it before changing anything that talks to `dvoix`.
+The official Kanban plugin for [dvoix](https://github.com/dvoi-dev/dvoix), installed through the plugin store in the app. It adds the file type `.kboard`: a Markdown file in which every `## heading` is a column and every top-level list item is a card. The API it uses is described in `docs/plugins/README.md` of the app repo; read it before changing anything that talks to `dvoix`.
 
 ## The dvoix repos
 
@@ -12,17 +12,17 @@ dvoix is spread across several repositories. This section is also in the `AGENTS
 
 | Repo | Purpose | What belongs there |
 | --- | --- | --- |
-| [`DamavoiZ/dvoix`](https://github.com/DamavoiZ/dvoix) | the app | Rust core, Tauri shell, Svelte frontend, core plugins, plugin API, plugin store in the app, developer guide for store plugins (`docs/plugins/`), developer README |
-| [`DamavoiZ/dvoix-website`](https://github.com/DamavoiZ/dvoix-website) | product page and docs | product page at `/`, user and plugin developer docs at `/docs`, screenshots for the page, Docker image for the server |
-| [`DamavoiZ/dvoix-plugins`](https://github.com/DamavoiZ/dvoix-plugins) | list of the plugin store | only `registry.json` and its check (`scripts/validate.mjs`). No plugin code |
-| `DamavoiZ/dvoix-<name>` | one official store plugin each | code, `manifest.json`, releases with `manifest.json`, `main.js`, `styles.css` |
+| [`dvoi-dev/dvoix`](https://github.com/dvoi-dev/dvoix) | the app | Rust core, Tauri shell, Svelte frontend, core plugins, plugin API, plugin store in the app, developer guide for store plugins (`docs/plugins/`), developer README |
+| [`dvoi-dev/dvoix-website`](https://github.com/dvoi-dev/dvoix-website) | product page and docs | product page at `/`, user and plugin developer docs at `/docs`, screenshots for the page, Docker image for the server |
+| [`dvoi-dev/dvoix-plugins`](https://github.com/dvoi-dev/dvoix-plugins) | list of the plugin store | only `registry.json` and its check (`scripts/validate.mjs`). No plugin code |
+| `dvoi-dev/dvoix-<name>` | one official store plugin each | code, `manifest.json`, releases with `manifest.json`, `main.js`, `styles.css` |
 
 ### Where does what go?
 
 | Task | Repo |
 | --- | --- |
 | Basic function almost everyone needs (explorer, search, tasks, …) | `dvoix`, as a core plugin under `src/lib/plugins/core/` |
-| Extra function not everyone wants (kanban, tracking, …) | its own repo `DamavoiZ/dvoix-<name>` as a store plugin, plus an entry in `dvoix-plugins` |
+| Extra function not everyone wants (kanban, tracking, …) | its own repo `dvoi-dev/dvoix-<name>` as a store plugin, plus an entry in `dvoix-plugins` |
 | Extend the plugin API (`PluginContext`, permissions) | `dvoix`, plus `docs/plugins/README.md` there and the `plugin-api.md` page on the website |
 | Explain how to use dvoix | `dvoix-website`, page in `src/content/docs/` |
 | Offer or remove a plugin in the store | `dvoix-plugins`, `registry.json` |
@@ -31,8 +31,8 @@ dvoix is spread across several repositories. This section is also in the `AGENTS
 ### What is connected across repo boundaries
 
 - **Format of the plugin list:** defined in `crates/dvoix-core/src/store.rs` (`parse_registry`) of the app, example in `docs/plugins/registry.example.json`, checked by `scripts/validate.mjs` in `dvoix-plugins`. If the format changes, all three places change.
-- **Address of the plugin list:** the app reads `https://raw.githubusercontent.com/DamavoiZ/dvoix-plugins/main/registry.json`. Never change the repo name, the branch `main` or the file name, or no installed app finds plugins anymore.
-- **Official:** `"channel": "official"` only applies to repos of `DamavoiZ`. The app and the check in `dvoix-plugins` both enforce this.
+- **Address of the plugin list:** the app reads `https://raw.githubusercontent.com/dvoi-dev/dvoix-plugins/main/registry.json`. Never change the repo name, the branch `main` or the file name, or no installed app finds plugins anymore.
+- **Official:** `"channel": "official"` only applies to repos of `dvoi-dev`. The app and the check in `dvoix-plugins` both enforce this.
 - **Plugin API:** `src/lib/plugins/store/api.ts` in the app, `docs/plugins/README.md` in the app and `src/content/docs/plugin-api.md` on the website describe the same API and must match.
 - **Features of the app:** what the website docs say about the app must match the code in `dvoix`. If the app changes in a way users see, the docs are updated.
 

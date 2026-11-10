@@ -21,7 +21,7 @@ await build({
   target: "es2022",
   outfile: "dist/main.js",
   legalComments: "none",
-  banner: { js: `// dvoix Kanban ${manifest.version}, built from https://github.com/DamavoiZ/dvoix-kanban` },
+  banner: { js: `// dvoix Kanban ${manifest.version}, built from https://github.com/dvoi-dev/dvoix-kanban` },
 });
 await copyFile("manifest.json", "dist/manifest.json");
 await copyFile("styles.css", "dist/styles.css");

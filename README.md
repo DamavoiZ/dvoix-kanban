@@ -1,6 +1,6 @@
 # dvoix Kanban
 
-Kanban boards for [dvoix](https://github.com/DamavoiZ/dvoix). Official store plugin: install it in dvoix under **Settings → Plugin store**.
+Kanban boards for [dvoix](https://github.com/dvoi-dev/dvoix). Official store plugin: install it in dvoix under **Settings → Plugin store**.
 
 ## What it does
 
