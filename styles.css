@@ -4,6 +4,7 @@
    not emit a variable it does not use itself. */
 
 .kb-board {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: 0.75rem;
@@ -56,6 +57,7 @@
 }
 
 .kb-cards {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0.375rem;
@@ -233,36 +235,40 @@
   margin: 0.25rem 0.5rem 0.5rem;
 }
 
-/* Dragging */
-.kb-is-dragging,
-.kb-is-dragging * {
+/* Dragging. While a drag runs, nothing in the app can be selected, so
+   moving fast over other text does not mark it. */
+:root.kb-drag-active,
+:root.kb-drag-active * {
+  user-select: none !important;
   cursor: grabbing !important;
 }
-.kb-dragging {
-  opacity: 0.35;
+.kb-lifted {
+  display: none !important;
 }
 .kb-ghost {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 1000;
+  margin: 0;
   overflow: hidden;
   pointer-events: none;
-  box-shadow: 0 10px 30px rgb(0 0 0 / 0.5);
+  /* The ghost lives in <body>, outside the board, so it needs the board's text style. */
+  font-size: 0.875rem;
+  color: var(--color-zinc-200, #e4e4e7);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.55);
   rotate: 1.5deg;
+  will-change: transform;
 }
-.kb-drop {
+.kb-placeholder {
   flex: none;
-  height: 2px;
-  margin: -1px 0;
-  border-radius: 1px;
-  background: var(--color-violet-500, #8b5cf6);
+  box-sizing: border-box;
+  border: 1px dashed var(--color-violet-500, #8b5cf6);
+  border-radius: 0.375rem;
+  background: rgb(139 92 246 / 0.08);
 }
-.kb-drop-column {
-  flex: none;
+.kb-placeholder-column {
+  flex: 0 0 auto;
   align-self: stretch;
-  width: 2px;
-  margin: 0 -0.375rem 0 -0.4375rem;
-  border-radius: 1px;
-  background: var(--color-violet-500, #8b5cf6);
+  border-radius: 0.5rem;
 }
